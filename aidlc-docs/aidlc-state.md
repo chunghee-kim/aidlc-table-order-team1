@@ -65,7 +65,10 @@
         Infra 산출물: `construction/u3-menu/infrastructure-design/{infrastructure-design,deployment-architecture}.md` (신규 공유 인프라 없음 — U1 모놀리스 공유)
   - [ ] C · U4 Cart & Order
   - [ ] D · U5 Order Monitoring (SSE) — 🔧 Functional Design ✅ · 📊 NFR Requirements ✅ · 🎨 NFR Design ✅ · 🏢 Infrastructure Design ✅(산출물 2종 승인 대기), 이후 Code Generation 예정
-  - [ ] E · U6 Session Lifecycle & History
+  - [x] **E · U6 Session Lifecycle & History** — 코드 완주 + 검증 통과 ✅ (2026-08-31, no-escalation 전략: 동결 계약 무변경)
+        FD: `construction/u6-session-lifecycle/functional-design/{domain-entities,business-rules,business-logic-model,frontend-components}.md`
+        Backend: `services/table_session/lifecycle.py`(get_or_start_active_session·close_table), `services/history_service.py`, `repositories/order_history.py`(OrderHistoryRepoImpl), `routers/{table_close,history}.py`, 파사드 `table_session/__init__.py` 배선, `main.py` 라우터 등록. PBT(Hypothesis): P1 활성세션≤1·멱등, P2 무손실 이관·리셋 → **pytest 9 passed**. TestClient 스모크(라우트 등록·409 CONFLICT·422 VALIDATION_ERROR·빈 목록) 통과.
+        Frontend: `features/admin/table-close/`(useCloseTable·CloseConfirmModal·CloseTableView·routes), `features/admin/history/`(OrderHistoryView·query·routes). PBT(fast-check): buildHistoryQuery 라운드트립 → **vitest 2 passed**. `typecheck`·`build`(45 modules) 통과. main.tsx 미편집(라우트 레지스트리 자동 수집).
   - 권장 머지 순서: A → B → C → (D, E 병렬) → 파사드/DI 조립 PR
 - [ ] Build and Test (종단 통합 검증)
 
