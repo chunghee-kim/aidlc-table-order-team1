@@ -291,3 +291,15 @@ Answers extracted:
 **Context**: CONSTRUCTION - Phase 1 [U3/B] NFR Design 완료.
 
 ---
+
+## U3 Menu — Infrastructure Design (스트림 B)
+**Timestamp**: 2026-08-31T00:00:00Z
+**User Input**: "U3에 대한 Infrastructure Design 추가"
+**AI Response**: `construction/plans/u3-menu-infrastructure-design-plan.md` Q1~Q7 `[Answer]:` 전부 권장안(로컬 단일노드·단일프로세스·SQLite파일·메시징無·vite프록시+앱레벨게이트·기본로깅+헬스체크·U1인프라공유+앱레벨 매장스코프) 기입 후 Infrastructure Design 산출물 2종 생성.
+- `construction/u3-menu/infrastructure-design/infrastructure-design.md`: 논리→물리 컴포넌트 매핑표 + 인프라 결정 IX1~IX7 + 미도입 인프라 정당화표(클라우드/컨테이너/관리형DB/오브젝트스토리지/큐/API게이트웨이·LB·WAF/CDN/관측성스택/시크릿매니저 ❌ + 향후지점) + 향후 클라우드 매핑 참고표 + NFR→인프라 추적.
+- `construction/u3-menu/infrastructure-design/deployment-architecture.md`: 로컬 단일노드 배포 토폴로지 ASCII(브라우저→vite:5173→/api프록시→uvicorn:8000→SQLite, 이미지 외부URL) + 실행/기동 절차 6단계 + 포트/경로 매핑 + 데이터 수명주기 + 배포 특성 요약.
+- 공유 인프라: **신규 없음** → `shared-infrastructure.md` 미생성(U1 소유 모놀리스 인프라 참조). U3는 신규 물리 컴포넌트·의존성 미도입.
+- `aidlc-state.md`: U3 스트림 B → Infrastructure Design ✅ 추가 표기.
+**Context**: CONSTRUCTION - Phase 1 [U3/B] Infrastructure Design 완료. 남은 스테이지: Code Generation(코드 구현은 완료, DoD 런타임 검증만 잔여).
+
+---
