@@ -12,21 +12,23 @@ from app.schemas.admin_order import TableTotals
 from app.schemas.common import OrderView
 from app.schemas.order import OrderItemInput, OrderPage
 
+# --- U4/C (create.py) --- wired by stream C
+from app.services.order import create as _create
 
-# --- U4/C (create.py) ---
+
 def create_order(session_ctx: Any, items: list[OrderItemInput]) -> OrderView:
     """Create order: ensure session, total=Σ(unit_price×qty), assign number, publish order_created."""
-    raise NotImplementedError("create_order — implemented in U4/C (services/order/create.py)")
+    return _create.create_order(session_ctx, items)
 
 
 def list_current_session_orders(session_id: int, page: Any) -> OrderPage:
     """List current session's orders in time order (US-C-14)."""
-    raise NotImplementedError("list_current_session_orders — implemented in U4/C (create.py)")
+    return _create.list_current_session_orders(session_id, page)
 
 
 def list_admin_orders(store_id: int, table_filter: int | None = None) -> list[OrderView]:
     """Admin dashboard initial snapshot (US-A-05/08)."""
-    raise NotImplementedError("list_admin_orders — implemented in U4/C (create.py)")
+    return _create.list_admin_orders(store_id, table_filter)
 
 
 # --- U5/D (admin.py) ---
