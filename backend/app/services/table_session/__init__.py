@@ -44,11 +44,16 @@ def resolve_session_context(store_code: str, table_number: int, table_password: 
 
 
 # --- U6/E (lifecycle.py) ---
+# Wired to the concrete implementation. Imported here (after CloseResult is defined) to avoid a
+# circular import, since lifecycle.py imports CloseResult from this package.
+from app.services.table_session import lifecycle as _lifecycle  # noqa: E402
+
+
 def get_or_start_active_session(table_id: int) -> Any:
     """Return active session or start a new one. Invariant: <=1 active per table (US-A-11)."""
-    raise NotImplementedError("get_or_start_active_session — implemented in U6/E (lifecycle.py)")
+    return _lifecycle.get_or_start_active_session(table_id)
 
 
 def close_table(table_id: int, actor: Any) -> CloseResult:
     """Close usage: migrate orders -> OrderHistory losslessly + reset (US-A-12)."""
-    raise NotImplementedError("close_table — implemented in U6/E (lifecycle.py)")
+    return _lifecycle.close_table(table_id, actor)
