@@ -60,7 +60,9 @@
         검증: `pytest` 13 pass, `npm run typecheck`/`build` pass, 시드 대상 종단 스모크(login→setup→table-login, 보호엔드포인트 401) pass.
         산출물: Functional Design(`construction/u2-auth/functional-design/functional-design.md`), **NFR 정의**(`construction/u2-auth/nfr/nfr-requirements.md`)·**NFR 설계**(`construction/u2-auth/nfr/nfr-design.md`) — NFR-2(보안: bcrypt12·JWT16h·시도제한5→429·열거방지·테이블경계)·NFR-3(세션)·NFR-4/6/7 커버.
         Infrastructure 단계: 별도 인프라 없음(SQLite 파일·`.env`·로컬 기동) → NFR 설계 §3.3/§5에 흡수. Code Generation 완료.
-  - [ ] B · U3 Menu
+  - [~] B · U3 Menu — Functional Design ✅ · NFR Requirements ✅ · NFR Design ✅ · Infrastructure Design ✅ (Code Generation: 코드 구현 완료, branch `feature/u3-menu`)
+        NFR 산출물: `construction/u3-menu/nfr-requirements/{nfr-requirements,tech-stack-decisions}.md`, `construction/u3-menu/nfr-design/{nfr-design-patterns,logical-components}.md`
+        Infra 산출물: `construction/u3-menu/infrastructure-design/{infrastructure-design,deployment-architecture}.md` (신규 공유 인프라 없음 — U1 모놀리스 공유)
   - [ ] C · U4 Cart & Order
   - [ ] D · U5 Order Monitoring (SSE)
   - [ ] E · U6 Session Lifecycle & History
