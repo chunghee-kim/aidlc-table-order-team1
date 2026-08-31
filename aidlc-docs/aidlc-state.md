@@ -55,7 +55,8 @@
   - Phase 0 DoD: 정적 완료. 런타임 검증 명령은 `construction/plans/u1-foundation-functional-design-plan.md`·CLAUDE.md 참조 → 통과 시 Phase 1 착수 신호
 - [ ] **Phase 1 — 5개 스트림 병렬 (5인 · 계약 스텁 대상)** — 각 스트림: Functional Design / NFR / Infrastructure / Code Generation
   - [ ] A · U2 Auth & Session
-  - [ ] B · U3 Menu
+  - [~] B · U3 Menu — Functional Design ✅ · NFR Requirements ✅ · NFR Design ✅ (Infrastructure / Code Generation: 코드 구현 완료, branch `feature/u3-menu`)
+        NFR 산출물: `construction/u3-menu/nfr-requirements/{nfr-requirements,tech-stack-decisions}.md`, `construction/u3-menu/nfr-design/{nfr-design-patterns,logical-components}.md`
   - [ ] C · U4 Cart & Order
   - [ ] D · U5 Order Monitoring (SSE)
   - [ ] E · U6 Session Lifecycle & History
