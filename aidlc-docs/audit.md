@@ -226,3 +226,35 @@ Answers extracted:
 **Context**: CONSTRUCTION - Phase 0 (공통 기반, 1인 선행) [U1]. Functional Design Part 1 (Planning). 실행 모델만 개정, 진행 위치는 U1 그대로.
 
 ---
+
+## U1 Functional Design — Q1~Q9 답변 & 산출물 생성
+**Timestamp**: 2026-08-31T00:00:00Z
+**User Input**: "CONSTRUCTION PHASE u1 진행하는데, 병렬실행 유의해서 해." + (AskUserQuestion 응답) Q1~Q9 **전부 권장안(A)**, 진행 범위 **Phase 0 코드까지 완주**.
+**AI Response**: `u1-foundation-functional-design-plan.md` Q1~Q9 `[Answer]:` 를 전부 권장안(A)으로 기록(PK=AUTOINCREMENT, UTC, order_number=YYYYMMDD-###, close 시 물리삭제+스냅샷, items_snapshot=JSON, 시드 STORE01/admin/12테이블 멱등, bcrypt 12, create_all(), 공통 에러코드 enum). Functional Design 산출물 3종 생성: `construction/u1-foundation/functional-design/domain-entities.md`(9엔티티 상세+ERD+불변식 참조지점), `business-rules.md`(시드·order_number·UTC·에러코드·무결성), `business-logic-model.md`(부팅·DbSession·Health·ErrorHandler·라우트 레지스트리·계약 동결 목록). frontend-components.md 생략(U1 UI 없음).
+**Context**: CONSTRUCTION - Phase 0 [U1] Functional Design 완료.
+
+---
+
+## U1 Code Generation — Phase 0 실체 구현 + 전 교차 계약 동결
+**Timestamp**: 2026-08-31T00:00:00Z
+**AI Response**: Phase 0 코드 생성(병렬실행 유의 — 1파일 1스트림 소유 준수, 스트림 소유 파일 미생성).
+- **Backend 실체(U1)**: `backend/` — `requirements.txt`, `.env.example`, `app/config.py`, `app/db.py`(DbSessionProvider·Base·create_all), `app/errors.py`(ErrorCode enum·AppError·ErrorHandler), `app/security.py`(bcrypt), `app/models/`(9모델 전량), `app/seed.py`(멱등 시드), `app/main.py`(AppBootstrap), `app/routers/health.py`(GET /api/health).
+- **Backend 계약 동결(스텁)**: `app/schemas/`(전 엔드포인트 Pydantic + OrderView/ErrorBody), `app/auth/dependency.py`(AuthDependency+AdminContext, dev 통과 스텁), `app/services/order_event_broker.py`(Protocol+스텁), `app/services/order/__init__.py`·`app/services/table_session/__init__.py`(파사드/프로토콜 스텁, submodule 미생성), `app/repositories/*`(리포 Protocol 8종).
+- **Frontend 실체(U1)**: `frontend/` — package.json/tsconfig/vite, `src/main.tsx`(라우트 레지스트리 수집), `src/app/route-registry.ts`(import.meta.glob), `src/shared/api/api-client.ts`(ApiClient 실구현), `src/shared/ui/Button.tsx`, `src/features/README.md`(레지스트리 규약).
+- **Frontend 계약 동결(스텁)**: `src/context/{auth,table-session,cart}-context.tsx`, `src/shared/api/sse-client.ts`.
+- **미생성(스트림 소유)**: auth_service/menu_service/history_service, order/{create,admin}.py, table_session/{identify,lifecycle}.py, 스트림 라우터(auth/table_setup/table_close/menu/order/admin_order/history), 리포 구현, feature 뷰 — 충돌면 제거.
+- **런타임 검증 미수행**: 현 환경에 Python/Node 미설치. DoD 런타임 검증(seed·uvicorn·`/health`·npm dev·tsc) 명령은 계획서/CLAUDE.md에 기재. 정적 산출물·계약 스텁 임포트 경로 정합성 자체검토 완료.
+**Context**: CONSTRUCTION - Phase 0 [U1] Code Generation 완료. Phase 1(U2~U6 5스트림) 착수 준비.
+
+---
+
+## U1 Phase 0 — 런타임 DoD 검증 통과
+**Timestamp**: 2026-08-31T00:00:00Z
+**User Input**: "너가 알아서 설치하고 DoD 검증까지 완료해"
+**AI Response**: winget으로 Python 3.12.10(user scope) + Node.js 24.19.0(LTS) 설치. 런타임 검증 전량 통과:
+- Backend: `.venv` 생성 + `pip install -r requirements.txt`(fastapi 0.141, sqlalchemy 2.0.52, pydantic 2.13, bcrypt 5.0, pyjwt 2.13 등). `import app.main` OK. `python -m app.seed` 1회차 시드(store1/admin1/category4/menu19/table12), 2회차 멱등(전량 스킵). `uvicorn app.main:app` 기동 → `GET /api/health` = **200 {"status":"ok","db":"ok"}**, `/docs`=200(OpenAPI 생성). 계약 스텁 19개 모듈 임포트 OK, `create_order` 스텁 NotImplementedError, AuthDependency dev 스텁 AdminContext 반환 확인.
+- Frontend: `npm install`(node PATH 주입 후 성공, 103 packages). `npm run typecheck`(tsc --noEmit) **무오류**. `npm run build`(tsc + vite build) **성공**(37 modules, dist 생성). `npm run preview` → `/`·`/customer` HTTP 200, index.html #root 확인.
+- **결론**: ✅ Phase 0 DoD 전 항목 통과. Phase 1(U2~U6 5스트림) 착수 가능.
+**Context**: CONSTRUCTION - Phase 0 [U1] 런타임 검증 완료.
+
+---

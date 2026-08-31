@@ -4,15 +4,15 @@
 - **Project Name**: Table Order Service (테이블오더 서비스)
 - **Project Type**: Greenfield
 - **Start Date**: 2026-08-31T04:12:23Z
-- **Current Stage**: CONSTRUCTION - **Phase 0 (공통 기반, 1인 선행)** [U1 Foundation & Data + 전 교차 계약 동결] - Functional Design Part 1 (Planning) — plan generated, awaiting answers
+- **Current Stage**: CONSTRUCTION - **Phase 0 (공통 기반, 1인 선행)** [U1 Foundation & Data + 전 교차 계약 동결] - **완료 + 런타임 검증 통과** (Q1~Q9 전부 권장안 A). Python 3.12.10 + Node 24.19.0 설치, backend venv/pip install, 멱등 시드, `uvicorn`+`/api/health`=200, 전 계약 스텁 임포트, frontend `npm install`/`tsc --noEmit`/`vite build`/preview 200 모두 통과. ✅ **Phase 0 DoD 달성 → Phase 1 (U2~U6 5스트림) 착수 가능.**
 - **Execution Model**: 5인 병렬 (2-Phase). Phase 0 = U1 + 계약 스텁 동결(1인) → Phase 1 = U2~U6 5개 스트림 병렬. 근거: `inception/application-design/parallel-execution.md`
 
 ## Workspace State
-- **Existing Code**: No
+- **Existing Code**: Yes (Phase 0 scaffolding + U1 foundation + 계약 스텁)
 - **Reverse Engineering Needed**: No
-- **Programming Languages**: None yet (to be determined)
-- **Build System**: None yet (to be determined)
-- **Project Structure**: Empty (Greenfield)
+- **Programming Languages**: Python 3 (FastAPI backend) + TypeScript (React/Vite frontend)
+- **Build System**: pip / `requirements.txt` (backend), npm / Vite (frontend)
+- **Project Structure**: `backend/` (app: models·db·errors·seed·main·health + schemas·auth·services·repositories 스텁) + `frontend/` (src: main·app·shared·context)
 - **Workspace Root**: C:\Users\김충희\aidlc-workshop\table-order
 
 ## Code Location Rules
@@ -48,10 +48,11 @@
 - [x] Units Generation
 
 ### 🟢 CONSTRUCTION PHASE (5인 병렬 · 2-Phase)
-- [ ] **Phase 0 — 공통 기반 (1인 선행 · 유일 직렬 구간)**
-  - [ ] U1 Foundation & Data + 전 교차 계약 스텁 동결 ← **현재: Functional Design (Planning)**
-        (9모델·DB·에러·시드·ApiClient + AuthDependency/TableSessionService/OrderEventBroker/MenuRepo/schemas/프론트 Context·SseClient 인터페이스 동결)
-  - Phase 0 DoD 달성·머지 → Phase 1 착수 신호
+- [x] **Phase 0 — 공통 기반 (1인 선행 · 유일 직렬 구간)** — 코드 완주 + 런타임 DoD 검증 통과 ✅
+  - [x] U1 Foundation & Data + 전 교차 계약 스텁 동결
+        (9모델·DB·에러·멱등시드·ApiClient + AuthDependency/TableSessionService/OrderEventBroker/리포/schemas/프론트 Context·SseClient 인터페이스 동결, main.tsx 라우트 레지스트리)
+        Functional Design 산출물: `construction/u1-foundation/functional-design/{domain-entities,business-rules,business-logic-model}.md`
+  - Phase 0 DoD: 정적 완료. 런타임 검증 명령은 `construction/plans/u1-foundation-functional-design-plan.md`·CLAUDE.md 참조 → 통과 시 Phase 1 착수 신호
 - [ ] **Phase 1 — 5개 스트림 병렬 (5인 · 계약 스텁 대상)** — 각 스트림: Functional Design / NFR / Infrastructure / Code Generation
   - [ ] A · U2 Auth & Session
   - [ ] B · U3 Menu
