@@ -32,15 +32,19 @@ class CloseResult:
     closed_at: datetime
 
 
-# --- U2/A (identify.py) ---
+# --- U2/A (identify.py) — facade wiring; delegates via lazy import to avoid a package cycle. ---
 def setup_table(store_id: int, table_number: int, table_password: str, actor: Any) -> TableSetupResult:
     """Tablet initial setup: store number/password, enable auto-login (US-A-04)."""
-    raise NotImplementedError("setup_table — implemented in U2/A (services/table_session/identify.py)")
+    from app.services.table_session import identify
+
+    return identify.setup_table(store_id, table_number, table_password, actor)
 
 
 def resolve_session_context(store_code: str, table_number: int, table_password: str) -> TableSessionContext:
     """Tablet auto-login: restore store/table identity context (US-C-01/02)."""
-    raise NotImplementedError("resolve_session_context — implemented in U2/A (identify.py)")
+    from app.services.table_session import identify
+
+    return identify.resolve_session_context(store_code, table_number, table_password)
 
 
 # --- U6/E (lifecycle.py) ---
