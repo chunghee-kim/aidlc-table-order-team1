@@ -64,7 +64,7 @@
         NFR 산출물: `construction/u3-menu/nfr-requirements/{nfr-requirements,tech-stack-decisions}.md`, `construction/u3-menu/nfr-design/{nfr-design-patterns,logical-components}.md`
         Infra 산출물: `construction/u3-menu/infrastructure-design/{infrastructure-design,deployment-architecture}.md` (신규 공유 인프라 없음 — U1 모놀리스 공유)
   - [ ] C · U4 Cart & Order
-  - [ ] D · U5 Order Monitoring (SSE)
+  - [ ] D · U5 Order Monitoring (SSE) — 🔧 Functional Design ✅ · 📊 NFR Requirements ✅ · 🎨 NFR Design ✅ · 🏢 Infrastructure Design ✅(산출물 2종 승인 대기), 이후 Code Generation 예정
   - [ ] E · U6 Session Lifecycle & History
   - 권장 머지 순서: A → B → C → (D, E 병렬) → 파사드/DI 조립 PR
 - [ ] Build and Test (종단 통합 검증)
