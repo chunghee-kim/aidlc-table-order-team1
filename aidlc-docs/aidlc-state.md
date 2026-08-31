@@ -54,7 +54,10 @@
         Functional Design 산출물: `construction/u1-foundation/functional-design/{domain-entities,business-rules,business-logic-model}.md`
   - Phase 0 DoD: 정적 완료. 런타임 검증 명령은 `construction/plans/u1-foundation-functional-design-plan.md`·CLAUDE.md 참조 → 통과 시 Phase 1 착수 신호
 - [ ] **Phase 1 — 5개 스트림 병렬 (5인 · 계약 스텁 대상)** — 각 스트림: Functional Design / NFR / Infrastructure / Code Generation
-  - [ ] A · U2 Auth & Session
+  - [x] A · U2 Auth & Session — 브랜치 `feat/u2-auth`. Functional Design + 실구현 완료.
+        백엔드: AuthDependency(JWT 실검증)·auth_service(로그인/16h/시도제한5회→429)·routers/{auth,table_setup}·table_session/identify·{store,admin_user,table,session}Repo 구체구현·main.py 라우터 등록. 파사드는 identify만 배선(lifecycle는 U6/E 스텁 유지).
+        프론트: AuthContext·TableSessionContext 실구현, features/admin/auth(AdminLogin·TableSetup)·features/customer/auto-login(AutoLoginBootstrap·TableLogin).
+        검증: `pytest` 13 pass, `npm run typecheck`/`build` pass, 시드 대상 종단 스모크(login→setup→table-login, 보호엔드포인트 401) pass. Functional Design: `construction/u2-auth/functional-design/functional-design.md`.
   - [ ] B · U3 Menu
   - [ ] C · U4 Cart & Order
   - [ ] D · U5 Order Monitoring (SSE)
