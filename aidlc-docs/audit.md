@@ -258,3 +258,53 @@ Answers extracted:
 **Context**: CONSTRUCTION - Phase 0 [U1] 런타임 검증 완료.
 
 ---
+
+## U5 Monitoring (SSE) — Functional Design
+**Timestamp**: 2026-08-31T00:00:00Z
+**Stream**: Phase 1 · D [U5 Order Monitoring (SSE)]
+**User Input**: U5 담당. Functional Design Plan(Q1~Q12) 답변 제출 — Q7=B, 나머지 전부 A.
+**AI Response**: Functional Design 산출물 4종 생성:
+- `construction/u5-monitoring/functional-design/domain-entities.md` — 참조 엔티티(Order/OrderItem/TableSession/Table), OrderView 투영(+order_id 병기 규약), 상태 enum, OrderEvent payload 형식(Q11/Q12), 인메모리 구독자 레지스트리 모델.
+- `business-rules.md` — 상태 전이 forward-only 표+불변식 BR-U5-1/2(🔬 PBT-U5-STATE), 삭제 상태무관+총액 재계산 BR-U5-5(🔬 PBT-U5-DELETE), 대시보드 active 세션 집계, 커밋 후 발행, SSE 재연결 스냅샷 replace, 쿼리 토큰 인증, 에러 매핑(401/403/404/409/422).
+- `business-logic-model.md` — 초기 로드→구독, order_created/updated/deleted 리듀서, change_status/delete_order 흐름, 재연결 복구, broker subscribe/publish/unsubscribe/snapshot 의사코드, PBT 속성 명세.
+- `frontend-components.md` — MonitoringDashboardView(ordersById/unseen/tableTotals/filter state), TableCard, OrderDetailModal(허용 전이만 버튼 노출·삭제 확인 팝업), TableFilterBar(클라이언트 필터), SseClient(EventSource+쿼리토큰+백오프), API 연동표, Q7-B unseen-until-viewed 강조.
+**Decisions**: Q1 forward-only 인접 전이, Q2 상태무관 삭제, Q3 active 세션 전체 집계, Q4 스냅샷 replace 복구, Q5 쿼리 토큰 SSE 인증, Q6 클라이언트 필터, **Q7=B(열람 전까지 강조 유지)**, Q8 최신 3개, Q9 단일 주문 상세, Q10 낙관적 처리(락 없음), Q11 order_deleted={order_id,table_id,table_total}, Q12 order_updated=OrderView 전체. 동결 계약(OrderView/broker/파사드/schemas) 변경 없음 — order_id는 SSE 프레임 직렬화 레이어에서 병기.
+**Context**: CONSTRUCTION - Phase 1 [U5] Functional Design 완료. 승인 시 NFR Requirements 진행.
+
+---
+
+## U5 Monitoring (SSE) — NFR Requirements
+**Timestamp**: 2026-08-31T00:00:00Z
+**Stream**: Phase 1 · D [U5 Order Monitoring (SSE)]
+**User Input**: NFR Requirements Plan(Q1~Q9) 답변 — 전부 A.
+**AI Response**: NFR 산출물 2종 생성:
+- `nfr-requirements/nfr-requirements.md` — 성능(PERF-1 커밋→반영 P95≤2초, PERF-2 fan-out ms, PERF-3 스냅샷 P95≤500ms), 확장(SCAL 1~5 동시 구독자·단일 프로세스·수평확장 비목표), 신뢰성(REL-1 15s ping, REL-2 백오프, REL-3 스냅샷 replace 멱등, REL-4 큐 maxsize=1000 드롭, REL-5 커밋 후 발행), 보안(SEC-1~4 JWT·쿼리토큰 마스킹·프로덕션 HTTPS 전환), 사용성(USE-1 44px, USE-2 unseen-until-viewed, USE-3 연결상태), 테스트(TEST-1 Hypothesis PBT, TEST-3 프론트 vitest 예제), 유지보수(구조화 로깅·APM 미도입), 이식성(Docker 불필요).
+- `nfr-requirements/tech-stack-decisions.md` — 백엔드 StreamingResponse+asyncio.Queue(sse-starlette 미도입), 프론트 EventSource+쿼리토큰+useReducer/useOrderStream, PBT Hypothesis(백엔드)/vitest 예제(프론트), 신규 의존성 없음(requirements.txt/package.json 불변), 프로덕션 보안 전환 체크리스트.
+**Decisions**: Q1 소규모 구독자, Q2 P95≤2초, Q3 15s keep-alive+백오프, Q4 큐 상한 드롭→스냅샷 복구, Q5 쿼리토큰+로그마스킹, Q6 구조화 로깅만, Q7 Hypothesis(백)/vitest(프), Q8 StreamingResponse+asyncio, Q9 useReducer. 신규 의존성 0.
+**Context**: CONSTRUCTION - Phase 1 [U5] NFR Requirements 완료. 승인 시 NFR Design 진행.
+
+---
+
+## U5 Monitoring (SSE) — NFR Design
+**Timestamp**: 2026-08-31T00:00:00Z
+**Stream**: Phase 1 · D [U5 Order Monitoring (SSE)]
+**User Input**: NFR Design Plan(Q1~Q6) 답변 — 전부 A.
+**AI Response**: NFR Design 산출물 2종 생성:
+- `nfr-design/nfr-design-patterns.md` — 10개 패턴: Publish-after-commit, In-memory fan-out, Snapshot-replace 재동기화, Backoff reconnect, Keep-alive heartbeat(wait_for 타임아웃 분기), Bounded queue+drop(maxsize=1000), Lifecycle finally, Idempotent pure reducer, Auth-at-connect(1회 검증), Query-optimized snapshot. 각 패턴→NFR 매핑·트레이드오프.
+- `nfr-design/logical-components.md` — 컴포넌트 맵/시퀀스: OrderEventBroker(subscribers registry·fan-out·snapshot·bounded queue), SseStreamEndpoint(auth-at-connect·generator·ping·finally), OrderAdminService(change_status/delete_order·publish-after-commit·순수함수 추출), 프론트 SseClient·useOrderStream·orderStreamReducer. 구독/재동기화·상태변경·삭제 시퀀스, 소유·경계 재확인(order_id는 라우터 직렬화 레이어, 스키마 불변).
+**Decisions**: Q1 서비스 명시 publish, Q2 while+finally+wait_for ping, Q3 구독선등록→스냅샷→yield+멱등 upsert, Q4 order_id 순수 리듀서, Q5 auth-at-connect 1회, Q6 단일 조인 쿼리+메모리 집계.
+**Context**: CONSTRUCTION - Phase 1 [U5] NFR Design 완료. 승인 시 Infrastructure Design 진행.
+
+---
+
+## U5 Monitoring (SSE) — Infrastructure Design
+**Timestamp**: 2026-08-31T00:00:00Z
+**Stream**: Phase 1 · D [U5 Order Monitoring (SSE)]
+**User Input**: Infrastructure Design Plan(Q1~Q6) 답변 — 전부 A.
+**AI Response**: Infrastructure Design 산출물 2종 생성:
+- `infrastructure-design/infrastructure-design.md` — 컴포넌트→런타임 매핑(broker=프로세스 메모리 싱글턴, SSE=uvicorn StreamingResponse, DB=SQLite 재사용, 메시징=asyncio.Queue), 단일 워커 모델(멀티워커 금지), SSE 헤더(text/event-stream·no-cache·keep-alive·X-Accel-Buffering:no), Vite 프록시 스트리밍, stdout 구조화 로깅+토큰 마스킹, 신규 인프라 0, 프로덕션 전환 표(멀티워커+Redis·HTTPS·nginx).
+- `infrastructure-design/deployment-architecture.md` — 로컬 토폴로지 다이어그램(Browser↔Vite:5173↔proxy↔uvicorn:8000↔SQLite), SSE 연결 경로 6단계, 기존 기동 절차 재사용, U5 종단 검증 시나리오 9개(2초 반영·강조·상세·전이·삭제·필터·재연결·PBT), 제약(단일 프로세스·로컬·HTTP·휘발).
+**Decisions**: Q1 단일 워커, Q2 Vite 프록시 스트리밍+no-buffering, Q3 표준 SSE 헤더, Q4 stdout+마스킹, Q5 SQLite+asyncio.Queue(신규 0), Q6 기존 절차+시나리오 문서화.
+**Context**: CONSTRUCTION - Phase 1 [U5] Infrastructure Design 완료. 승인 시 Code Generation(실제 U5 구현) 진행.
+
+---

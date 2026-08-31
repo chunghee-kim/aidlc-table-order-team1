@@ -57,7 +57,7 @@
   - [ ] A · U2 Auth & Session
   - [ ] B · U3 Menu
   - [ ] C · U4 Cart & Order
-  - [ ] D · U5 Order Monitoring (SSE)
+  - [ ] D · U5 Order Monitoring (SSE) — 🔧 Functional Design ✅ · 📊 NFR Requirements ✅ · 🎨 NFR Design ✅ · 🏢 Infrastructure Design ✅(산출물 2종 승인 대기), 이후 Code Generation 예정
   - [ ] E · U6 Session Lifecycle & History
   - 권장 머지 순서: A → B → C → (D, E 병렬) → 파사드/DI 조립 PR
 - [ ] Build and Test (종단 통합 검증)
