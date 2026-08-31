@@ -4,7 +4,15 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import type { CartItem, CartMenu } from "../../../context/cart-context";
-import { addItem, deserialize, removeItem, serialize, setQuantity, total } from "./cart-logic";
+import {
+  addItem,
+  deserialize,
+  MAX_QUANTITY,
+  removeItem,
+  serialize,
+  setQuantity,
+  total,
+} from "./cart-logic";
 
 const menuArb: fc.Arbitrary<CartMenu> = fc.record({
   id: fc.integer({ min: 1, max: 50 }),
@@ -63,6 +71,25 @@ describe("quantity rules", () => {
     fc.assert(
       fc.property(cartArb, (items) => {
         expect(items.every((i) => i.quantity >= 1)).toBe(true);
+      }),
+    );
+  });
+
+  it("setQuantity clamps to MAX_QUANTITY (NFR-4)", () => {
+    fc.assert(
+      fc.property(menuArb, fc.integer({ min: MAX_QUANTITY + 1, max: 100_000 }), (menu, qty) => {
+        const items = setQuantity([{ menuId: menu.id, name: menu.name, unitPrice: menu.price, quantity: 1 }], menu.id, qty);
+        expect(items[0].quantity).toBe(MAX_QUANTITY);
+      }),
+    );
+  });
+
+  it("addItem never exceeds MAX_QUANTITY (NFR-4)", () => {
+    fc.assert(
+      fc.property(menuArb, fc.integer({ min: 1, max: 300 }), (menu, times) => {
+        let items: CartItem[] = [];
+        for (let i = 0; i < times; i++) items = addItem(items, menu);
+        expect(items[0].quantity).toBe(Math.min(times, MAX_QUANTITY));
       }),
     );
   });

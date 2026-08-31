@@ -10,6 +10,7 @@ from hypothesis import strategies as st
 from app.errors import AppError, ErrorCode
 from app.schemas.order import OrderItemInput
 from app.services.order.create import (
+    MAX_QUANTITY,
     PricedItem,
     _validate_items,
     line_total,
@@ -19,6 +20,7 @@ from app.services.order.create import (
 
 _prices = st.integers(min_value=1, max_value=1_000_000)
 _qtys = st.integers(min_value=1, max_value=1000)
+_valid_qtys = st.integers(min_value=1, max_value=MAX_QUANTITY)  # NFR-4: 항목당 1~99
 
 
 @given(unit_price=_prices, quantity=_qtys)
@@ -55,8 +57,16 @@ def test_non_positive_quantity_rejected(quantity: int) -> None:
     assert exc.value.code == ErrorCode.VALIDATION_ERROR
 
 
-@given(quantity=_qtys)
-def test_positive_quantity_accepted(quantity: int) -> None:
+@given(quantity=st.integers(min_value=MAX_QUANTITY + 1, max_value=10_000))
+def test_over_cap_quantity_rejected(quantity: int) -> None:
+    # NFR-4: 항목당 수량 상한 99. 초과 시 VALIDATION_ERROR.
+    with pytest.raises(AppError) as exc:
+        _validate_items([OrderItemInput(menu_id=1, quantity=quantity)])
+    assert exc.value.code == ErrorCode.VALIDATION_ERROR
+
+
+@given(quantity=_valid_qtys)
+def test_in_range_quantity_accepted(quantity: int) -> None:
     _validate_items([OrderItemInput(menu_id=1, quantity=quantity)])  # no raise
 
 

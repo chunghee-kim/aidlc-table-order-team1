@@ -4,19 +4,25 @@ import type { CartItem, CartMenu } from "../../../context/cart-context";
 
 export const CART_STORAGE_KEY = "cart:v1";
 
-/** Add a menu: absent -> quantity 1, already present -> quantity + 1. Returns a new array. */
+// NFR-4 (사용성): 항목당 수량 상한 1~99. 메뉴 종류 수는 무제한.
+export const MAX_QUANTITY = 99;
+
+/** Add a menu: absent -> quantity 1, already present -> quantity + 1 (99 상한). Returns a new array. */
 export function addItem(items: CartItem[], menu: CartMenu): CartItem[] {
   const existing = items.find((i) => i.menuId === menu.id);
   if (existing) {
-    return items.map((i) => (i.menuId === menu.id ? { ...i, quantity: i.quantity + 1 } : i));
+    return items.map((i) =>
+      i.menuId === menu.id ? { ...i, quantity: Math.min(i.quantity + 1, MAX_QUANTITY) } : i,
+    );
   }
   return [...items, { menuId: menu.id, name: menu.name, unitPrice: menu.price, quantity: 1 }];
 }
 
-/** Set an item's quantity. quantity <= 0 removes it (no zero/negative lines, US-C-08). */
+/** Set an item's quantity. quantity <= 0 removes it (US-C-08); clamped to MAX_QUANTITY (NFR-4). */
 export function setQuantity(items: CartItem[], menuId: number, qty: number): CartItem[] {
   if (qty <= 0) return removeItem(items, menuId);
-  return items.map((i) => (i.menuId === menuId ? { ...i, quantity: qty } : i));
+  const capped = Math.min(qty, MAX_QUANTITY);
+  return items.map((i) => (i.menuId === menuId ? { ...i, quantity: capped } : i));
 }
 
 export function removeItem(items: CartItem[], menuId: number): CartItem[] {

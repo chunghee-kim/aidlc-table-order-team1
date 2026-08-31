@@ -11,6 +11,8 @@ order total == cart total. Pure helpers below (`line_total`, `order_total`) are 
 from datetime import datetime
 from typing import Any
 
+from sqlalchemy.exc import IntegrityError
+
 from app.db import SessionLocal
 from app.errors import AppError, ErrorCode
 from app.models import Menu, Order, OrderItem
@@ -19,6 +21,11 @@ from app.schemas.common import OrderItemView, OrderView, PageParams
 from app.schemas.order import OrderItemInput, OrderPage
 from app.services import table_session
 from app.services.order_event_broker import OrderEvent, broker
+
+# NFR-4 (사용성): 항목당 수량 상한. 항목(메뉴) 종류 수는 무제한.
+MAX_QUANTITY = 99
+# NFR-1 (성능/동시성): order_number UNIQUE 위반 시 재채번 재시도 횟수.
+MAX_NUMBER_RETRIES = 5
 
 
 # --- Pure, side-effect-free core (🔬 PBT target) -------------------------------------------
@@ -57,10 +64,10 @@ def _validate_items(items: list[OrderItemInput]) -> None:
     if not items:
         raise AppError(ErrorCode.VALIDATION_ERROR, "장바구니가 비어 있습니다.")
     for it in items:
-        if it.quantity < 1:
+        if it.quantity < 1 or it.quantity > MAX_QUANTITY:
             raise AppError(
                 ErrorCode.VALIDATION_ERROR,
-                "수량은 1 이상이어야 합니다.",
+                f"수량은 1~{MAX_QUANTITY} 범위여야 합니다.",
                 {"menu_id": it.menu_id, "quantity": it.quantity},
             )
 
@@ -116,21 +123,38 @@ def create_order(session_ctx: Any, items: list[OrderItemInput]) -> OrderView:
         total = order_total(priced)
 
         prefix = datetime.utcnow().strftime("%Y%m%d")
-        order_number = next_order_number(prefix, repo.max_order_number_today(session_ctx.store_id, prefix))
 
-        order = Order(
-            session_id=session_id,
-            table_id=session_ctx.table_id,
-            order_number=order_number,
-            status="대기중",
-            total_amount=total,
-        )
-        order_items = [
-            OrderItem(menu_id=p.menu_id, menu_name=p.menu_name, unit_price=p.unit_price, quantity=p.quantity)
-            for p in priced
-        ]
-        repo.create(order, order_items)
-        db.commit()
+        # NFR-1: 채번은 order_number UNIQUE 제약 + 재시도로 동시성 안전(§ nfr-design.md).
+        # 커밋 시 UNIQUE 충돌이 나면 롤백 후 오늘자 최대번호를 다시 읽어 재채번한다.
+        order = None
+        for attempt in range(MAX_NUMBER_RETRIES):
+            order_number = next_order_number(
+                prefix, repo.max_order_number_today(session_ctx.store_id, prefix)
+            )
+            order = Order(
+                session_id=session_id,
+                table_id=session_ctx.table_id,
+                order_number=order_number,
+                status="대기중",
+                total_amount=total,
+            )
+            order_items = [
+                OrderItem(menu_id=p.menu_id, menu_name=p.menu_name, unit_price=p.unit_price, quantity=p.quantity)
+                for p in priced
+            ]
+            repo.create(order, order_items)
+            try:
+                db.commit()
+                break
+            except IntegrityError:
+                db.rollback()
+                if attempt == MAX_NUMBER_RETRIES - 1:
+                    raise AppError(
+                        ErrorCode.CONFLICT,
+                        "주문번호 생성이 반복해서 충돌했습니다. 잠시 후 다시 시도해주세요.",
+                    )
+                # 다음 루프에서 max_order_number_today를 다시 조회해 재채번한다.
+
         db.refresh(order)
         view = _to_view(order)
     except AppError:
