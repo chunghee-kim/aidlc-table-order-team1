@@ -8,12 +8,15 @@ Signatures per component-methods.md §1.4. Do NOT change without owner+consumer 
 """
 from typing import Any
 
-from app.schemas.admin_order import TableTotals
+from app.schemas.admin_order import AdminOrderView, TableTotals
 from app.schemas.common import OrderView
 from app.schemas.order import OrderItemInput, OrderPage
 
 # --- U4/C (create.py) --- wired by stream C
 from app.services.order import create as _create
+
+# --- U5/D (admin.py) --- wired by stream D
+from app.services.order import admin as _admin
 
 
 def create_order(session_ctx: Any, items: list[OrderItemInput]) -> OrderView:
@@ -32,11 +35,16 @@ def list_admin_orders(store_id: int, table_filter: int | None = None) -> list[Or
 
 
 # --- U5/D (admin.py) ---
+def list_admin_orders_detailed(store_id: int, table_filter: int | None = None) -> list[AdminOrderView]:
+    """Admin snapshot with order_id, for the monitoring dashboard/list (US-A-05/08)."""
+    return _admin.list_admin_orders_detailed(store_id, table_filter)
+
+
 def change_status(order_id: int, next_status: str, actor: Any) -> OrderView:
     """Status transition (대기중→준비중→완료); allowed transitions only. Publish order_updated."""
-    raise NotImplementedError("change_status — implemented in U5/D (services/order/admin.py)")
+    return _admin.change_status(order_id, next_status, actor)
 
 
 def delete_order(order_id: int, actor: Any) -> TableTotals:
     """Admin delete + recompute table total (= remaining sum). Publish order_deleted."""
-    raise NotImplementedError("delete_order — implemented in U5/D (admin.py)")
+    return _admin.delete_order(order_id, actor)

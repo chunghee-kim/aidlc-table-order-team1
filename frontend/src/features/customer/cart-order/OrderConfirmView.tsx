@@ -45,6 +45,7 @@ export default function OrderConfirmView() {
         table_id: ctx.tableId,
         items: items.map((i) => ({ menu_id: i.menuId, quantity: i.quantity })),
       });
+      session.setSessionId(order.session_id); // enable 주문내역 for this active session
       cart.clear(); // success -> empty cart (US-C-13)
       navigate("/customer/order/success", { state: { orderNumber: order.order_number } });
     } catch (e) {

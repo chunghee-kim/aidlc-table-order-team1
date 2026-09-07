@@ -6,6 +6,7 @@ import { createContext, useCallback, useContext, useRef, useState, type ReactNod
 import { apiClient } from "../shared/api/api-client";
 
 export const TABLE_CONFIG_KEY = "table_config";
+export const TABLE_SESSION_ID_KEY = "table_session_id";
 
 export interface TableConfig {
   storeCode: string;
@@ -23,6 +24,7 @@ export interface TableSessionContextValue {
   bootstrap(): Promise<void>; // localStorage setup -> resolve_session_context; survives refresh
   getContext(): TableSessionInfo | null;
   isConfigured(): boolean; // prompt initial setup when false
+  setSessionId(sessionId: number): void; // record the active session id after the first order
 }
 
 interface TableLoginResponse {
@@ -74,7 +76,13 @@ export function TableSessionProvider({ children }: { children: ReactNode }) {
       { store_code: cfg.storeCode, table_number: cfg.tableNumber, table_password: cfg.tablePassword },
       { auth: false },
     );
-    const next: TableSessionInfo = { storeId: res.store_id, tableId: res.table_id, sessionId: null };
+    // Restore a previously-recorded active session id (kept across refreshes; set on first order).
+    const savedSid = Number(localStorage.getItem(TABLE_SESSION_ID_KEY));
+    const next: TableSessionInfo = {
+      storeId: res.store_id,
+      tableId: res.table_id,
+      sessionId: Number.isInteger(savedSid) && savedSid > 0 ? savedSid : null,
+    };
     infoRef.current = next;
     setInfo(next);
   }, []);
@@ -82,10 +90,20 @@ export function TableSessionProvider({ children }: { children: ReactNode }) {
   const getContext = useCallback(() => infoRef.current, []);
   const isConfigured = useCallback(() => readTableConfig() !== null, []);
 
+  const setSessionId = useCallback((sessionId: number) => {
+    localStorage.setItem(TABLE_SESSION_ID_KEY, String(sessionId));
+    const base = infoRef.current;
+    const next: TableSessionInfo = base
+      ? { ...base, sessionId }
+      : { storeId: 0, tableId: 0, sessionId };
+    infoRef.current = next;
+    setInfo(next);
+  }, []);
+
   // `info` is referenced so provider consumers re-render after bootstrap resolves.
   void info;
 
-  const value: TableSessionContextValue = { bootstrap, getContext, isConfigured };
+  const value: TableSessionContextValue = { bootstrap, getContext, isConfigured, setSessionId };
   return <TableSessionContext.Provider value={value}>{children}</TableSessionContext.Provider>;
 }
 

@@ -2,9 +2,51 @@
 // Stories: US-C-03 (default screen), US-C-04 (category filter), US-C-05 (details), US-C-06 (44x44px touch).
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
+import { useCart } from "../../../context/cart-context";
 import { ApiError } from "../../../shared/api/api-client";
 import { Button } from "../../../shared/ui/Button";
 import { formatPrice, menuApi, type CategoryView, type MenuView } from "../../menu/menu-api";
+
+// Deterministic pastel color from a name — used for the image fallback so cards always look intentional.
+function nameColor(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+  return `hsl(${h} 55% 88%)`;
+}
+
+/** Menu image with a graceful offline fallback (external placeholder URLs may not load). */
+function MenuImage({ url, name }: { url: string | null | undefined; name: string }) {
+  const [failed, setFailed] = useState(false);
+  if (url && !failed) {
+    return (
+      <img
+        src={url}
+        alt={name}
+        onError={() => setFailed(true)}
+        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+      />
+    );
+  }
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        background: nameColor(name),
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#334155",
+        fontWeight: 700,
+        fontSize: 20,
+        padding: 8,
+        textAlign: "center",
+      }}
+    >
+      {name}
+    </div>
+  );
+}
 
 export function MenuBrowseView() {
   const [categories, setCategories] = useState<CategoryView[]>([]);
@@ -81,28 +123,44 @@ export function MenuBrowseView() {
 }
 
 function MenuCard({ menu }: { menu: MenuView }) {
+  const cart = useCart();
+  const [added, setAdded] = useState(false);
+
+  function add() {
+    cart.addItem({ id: menu.id, name: menu.name, price: menu.price });
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 1000);
+  }
+
   return (
     <li style={card} aria-disabled={!menu.is_available}>
       <div style={imageWrap}>
-        {menu.image_url ? (
-          <img
-            src={menu.image_url}
-            alt={menu.name}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        ) : (
-          <span style={{ color: "#8b949e" }}>이미지 없음</span>
-        )}
+        <MenuImage url={menu.image_url} name={menu.name} />
         {!menu.is_available && <span style={soldOut}>품절</span>}
       </div>
-      <div style={{ padding: 12 }}>
+      <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
           <strong style={{ fontSize: 16 }}>{menu.name}</strong>
           <span style={{ fontSize: 16, whiteSpace: "nowrap" }}>{formatPrice(menu.price)}</span>
         </div>
         {menu.description && (
-          <p style={{ margin: "8px 0 0", color: "#57606a", fontSize: 14 }}>{menu.description}</p>
+          <p style={{ margin: 0, color: "#57606a", fontSize: 14 }}>{menu.description}</p>
         )}
+        <Button
+          onClick={add}
+          disabled={!menu.is_available}
+          style={{
+            marginTop: 4,
+            width: "100%",
+            background: added ? "#15803d" : menu.is_available ? "#1f6feb" : "#e5e7eb",
+            color: menu.is_available || added ? "#fff" : "#9ca3af",
+            borderColor: "transparent",
+            fontWeight: 600,
+            cursor: menu.is_available ? "pointer" : "not-allowed",
+          }}
+        >
+          {menu.is_available ? (added ? "담겼습니다 ✓" : "담기") : "품절"}
+        </Button>
       </div>
     </li>
   );
