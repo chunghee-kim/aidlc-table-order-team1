@@ -54,11 +54,22 @@
         Functional Design 산출물: `construction/u1-foundation/functional-design/{domain-entities,business-rules,business-logic-model}.md`
   - Phase 0 DoD: 정적 완료. 런타임 검증 명령은 `construction/plans/u1-foundation-functional-design-plan.md`·CLAUDE.md 참조 → 통과 시 Phase 1 착수 신호
 - [ ] **Phase 1 — 5개 스트림 병렬 (5인 · 계약 스텁 대상)** — 각 스트림: Functional Design / NFR / Infrastructure / Code Generation
-  - [ ] A · U2 Auth & Session
-  - [ ] B · U3 Menu
+  - [x] A · U2 Auth & Session — 브랜치 `feat/u2-auth`. Functional Design + 실구현 완료.
+        백엔드: AuthDependency(JWT 실검증)·auth_service(로그인/16h/시도제한5회→429)·routers/{auth,table_setup}·table_session/identify·{store,admin_user,table,session}Repo 구체구현·main.py 라우터 등록. 파사드는 identify만 배선(lifecycle는 U6/E 스텁 유지).
+        프론트: AuthContext·TableSessionContext 실구현, features/admin/auth(AdminLogin·TableSetup)·features/customer/auto-login(AutoLoginBootstrap·TableLogin).
+        검증: `pytest` 13 pass, `npm run typecheck`/`build` pass, 시드 대상 종단 스모크(login→setup→table-login, 보호엔드포인트 401) pass.
+        산출물: Functional Design(`construction/u2-auth/functional-design/functional-design.md`), **NFR 정의**(`construction/u2-auth/nfr/nfr-requirements.md`)·**NFR 설계**(`construction/u2-auth/nfr/nfr-design.md`) — NFR-2(보안: bcrypt12·JWT16h·시도제한5→429·열거방지·테이블경계)·NFR-3(세션)·NFR-4/6/7 커버.
+        Infrastructure 단계: 별도 인프라 없음(SQLite 파일·`.env`·로컬 기동) → NFR 설계 §3.3/§5에 흡수. Code Generation 완료.
+  - [~] B · U3 Menu — Functional Design ✅ · NFR Requirements ✅ · NFR Design ✅ · Infrastructure Design ✅ (Code Generation: 코드 구현 완료, branch `feature/u3-menu`)
+        NFR 산출물: `construction/u3-menu/nfr-requirements/{nfr-requirements,tech-stack-decisions}.md`, `construction/u3-menu/nfr-design/{nfr-design-patterns,logical-components}.md`
+        Infra 산출물: `construction/u3-menu/infrastructure-design/{infrastructure-design,deployment-architecture}.md` (신규 공유 인프라 없음 — U1 모놀리스 공유)
   - [ ] C · U4 Cart & Order
-  - [ ] D · U5 Order Monitoring (SSE)
-  - [ ] E · U6 Session Lifecycle & History
+  - [ ] D · U5 Order Monitoring (SSE) — 🔧 Functional Design ✅ · 📊 NFR Requirements ✅ · 🎨 NFR Design ✅ · 🏢 Infrastructure Design ✅(산출물 2종 승인 대기), 이후 Code Generation 예정
+  - [x] **E · U6 Session Lifecycle & History** — 코드 완주 + 검증 통과 ✅ (2026-08-31, no-escalation 전략: 동결 계약 무변경)
+        FD: `construction/u6-session-lifecycle/functional-design/{domain-entities,business-rules,business-logic-model,frontend-components}.md`
+        NFR: `construction/u6-session-lifecycle/nfr/{nfr-requirements,nfr-design}.md` (NFR-3 세션 라이프사이클·NFR-5 이력 보존·NFR-6 PBT 주 책임; 인프라는 로컬 전용 N/A). U2·U4 방식 정렬.
+        Backend: `services/table_session/lifecycle.py`(get_or_start_active_session·close_table), `services/history_service.py`, `repositories/order_history.py`(OrderHistoryRepoImpl), `routers/{table_close,history}.py`, 파사드 `table_session/__init__.py` 배선, `main.py` 라우터 등록. PBT(Hypothesis): P1 활성세션≤1·멱등, P2 무손실 이관·리셋 → **pytest 9 passed**. TestClient 스모크(라우트 등록·409 CONFLICT·422 VALIDATION_ERROR·빈 목록) 통과.
+        Frontend: `features/admin/table-close/`(useCloseTable·CloseConfirmModal·CloseTableView·routes), `features/admin/history/`(OrderHistoryView·query·routes). PBT(fast-check): buildHistoryQuery 라운드트립 → **vitest 2 passed**. `typecheck`·`build`(45 modules) 통과. main.tsx 미편집(라우트 레지스트리 자동 수집).
   - 권장 머지 순서: A → B → C → (D, E 병렬) → 파사드/DI 조립 PR
 - [ ] Build and Test (종단 통합 검증)
 

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.db import create_all
 from app.errors import register_error_handlers
-from app.routers import health
+from app.routers import admin_order, auth, health, history, menu, order, table_close, table_setup
 
 
 def create_app() -> FastAPI:
@@ -31,13 +31,13 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
 
     # --- Phase 1 stream routers (each stream appends its own include_router here) ---
-    # app.include_router(auth.router)          # U2/A
-    # app.include_router(table_setup.router)   # U2/A
-    # app.include_router(menu.router)          # U3/B
-    # app.include_router(order.router)         # U4/C
-    # app.include_router(admin_order.router)   # U5/D
-    # app.include_router(table_close.router)   # U6/E
-    # app.include_router(history.router)       # U6/E
+    app.include_router(auth.router)          # U2/A
+    app.include_router(table_setup.router)   # U2/A
+    app.include_router(menu.router)          # U3/B
+    app.include_router(order.router)         # U4/C
+    app.include_router(admin_order.router)   # U5/D
+    app.include_router(table_close.router)     # U6/E
+    app.include_router(history.router)         # U6/E
 
     return app
 

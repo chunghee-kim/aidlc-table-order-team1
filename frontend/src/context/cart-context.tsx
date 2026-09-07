@@ -1,7 +1,10 @@
 // CartContext (contract frozen in Phase 0; implemented by U4/C). component-methods.md §4.3
 // 🔬 Invariants (U4 PBT): getTotal = Σ(unit_price × quantity), quantity >= 1,
-// localStorage round-trip (save -> restore == original).
-import { createContext, useContext, type ReactNode } from "react";
+// localStorage round-trip (save -> restore == original). Pure ops live in
+// features/customer/cart-order/cart-logic.ts (tested by fast-check).
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+
+import * as cart from "../features/customer/cart-order/cart-logic";
 
 export interface CartMenu {
   id: number;
@@ -27,30 +30,32 @@ export interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-// Phase 0 stub. U4/C provides the real localStorage-backed implementation.
-const stubValue: CartContextValue = {
-  addItem(_menu) {
-    throw new Error("CartContext.addItem not implemented (U4/C owns).");
-  },
-  setQuantity(_menuId, _qty) {
-    throw new Error("CartContext.setQuantity not implemented (U4/C owns).");
-  },
-  removeItem(_menuId) {
-    throw new Error("CartContext.removeItem not implemented (U4/C owns).");
-  },
-  clear() {
-    throw new Error("CartContext.clear not implemented (U4/C owns).");
-  },
-  getTotal() {
-    return 0;
-  },
-  getItems() {
-    return [];
-  },
-};
+function readInitial(): CartItem[] {
+  if (typeof window === "undefined") return [];
+  return cart.deserialize(window.localStorage.getItem(cart.CART_STORAGE_KEY));
+}
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  return <CartContext.Provider value={stubValue}>{children}</CartContext.Provider>;
+  const [items, setItems] = useState<CartItem[]>(readInitial);
+
+  // Persist on every change so a refresh restores the cart (US-C-11).
+  useEffect(() => {
+    window.localStorage.setItem(cart.CART_STORAGE_KEY, cart.serialize(items));
+  }, [items]);
+
+  const value = useMemo<CartContextValue>(
+    () => ({
+      addItem: (menu) => setItems((prev) => cart.addItem(prev, menu)),
+      setQuantity: (menuId, qty) => setItems((prev) => cart.setQuantity(prev, menuId, qty)),
+      removeItem: (menuId) => setItems((prev) => cart.removeItem(prev, menuId)),
+      clear: () => setItems([]),
+      getTotal: () => cart.total(items),
+      getItems: () => items,
+    }),
+    [items],
+  );
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export function useCart(): CartContextValue {

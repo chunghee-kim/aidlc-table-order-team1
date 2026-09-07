@@ -258,3 +258,98 @@ Answers extracted:
 **Context**: CONSTRUCTION - Phase 0 [U1] 런타임 검증 완료.
 
 ---
+
+## U3 Menu — Functional Design + Code Generation (스트림 B, branch feature/u3-menu)
+**Timestamp**: 2026-08-31T00:00:00Z
+**User Input**: "Construction phase - phase 1 - u3 진행해줘. branch 새로 만들어서 작업 진행해."
+**AI Response**: `feature/u3-menu` 브랜치 생성 후 U3 Menu 기능 구현(commit 6dd160a). 동결 계약 미변경(1파일 1스트림 소유 준수).
+- **Backend**: `repositories/menu.py`(SqlMenuRepo — 정렬조회/생성/수정/삭제/순서, flush-only), `repositories/category.py`(SqlCategoryRepo), `services/menu_service.py`(검증·매장스코프·트랜잭션 소유·투영), `routers/menu.py`(공개 GET /menus·/categories + 보호 admin CRUD·menu-order), `main.py`(menu 라우터 등록).
+- **Tests**: `pytest.ini`, `tests/{__init__,conftest}.py`, `test_menu_service.py`(Hypothesis PBT: price>0·name 비공백·유효 라운드트립 + 예제), `test_menu_api.py`(TestClient 통합).
+- **Frontend**: `features/menu/menu-api.ts`, `features/customer/menu/{MenuBrowseView,routes}.tsx`, `features/admin/menu-manage/{MenuManageView,routes}.tsx`.
+- **런타임 검증 미수행**: 저작 환경 Python/Node 미설치 → `py_compile` 구문 검증 + 수동 TS 리뷰로 대체.
+**Context**: CONSTRUCTION - Phase 1 [U3/B] Functional Design + Code Generation 완료.
+
+---
+
+## U3 Menu — NFR Requirements (스트림 B)
+**Timestamp**: 2026-08-31T00:00:00Z
+**User Input**: "지금은 기능설계만 작성되었습니다. 비기능 요구사항 정의, 비기능 요구사항 설계도 작성해주세요."
+**AI Response**: `construction/plans/u3-menu-nfr-requirements-plan.md` Q1~Q7 `[Answer]:` 전부 권장안(성능목표·캐시無·인증게이트·2계층검증/PBT·이미지 외부URL·last-write-wins·관측성無) 기입 후 NFR Requirements 산출물 2종 생성.
+- `construction/u3-menu/nfr-requirements/nfr-requirements.md`: U3-NFR-* ID 체계 — Performance(P1~P4)·Scalability(SC1~2)·Availability(A1~2)·Security(S1~5)·Reliability(R1~5)·Maintainability(M1~4)·Usability(U1~5)·Testability(T1~5) + 글로벌 NFR-1~7 추적 매트릭스.
+- `construction/u3-menu/nfr-requirements/tech-stack-decisions.md`: 확정 스택 재사용 표 + U3 국소 결정 D1~D7(캐시無·페이지네이션無·Pydantic+서비스검증·외부URL이미지·last-write-wins·관측성無·로컬상태+ApiClient), 신규 의존성 0.
+**Context**: CONSTRUCTION - Phase 1 [U3/B] NFR Requirements 완료.
+
+---
+
+## U3 Menu — NFR Design (스트림 B)
+**Timestamp**: 2026-08-31T00:00:00Z
+**User Input**: (동일 요청) "비기능 요구사항 정의, 비기능 요구사항 설계도 추가해주세요."
+**AI Response**: `construction/plans/u3-menu-nfr-design-plan.md` Q1~Q7 권장안(2계층검증·Service-owns-transaction·단일정렬쿼리+병렬fetch·no-cache·엔드포인트게이트+스코프격리·인프라컴포넌트 미도입·우아한실패) 기입 후 NFR Design 산출물 2종 생성.
+- `construction/u3-menu/nfr-design/nfr-design-patterns.md`: 적용 패턴 P1~P10(검증·트랜잭션·성능·신선도·보안·사용성·회복성) + 코드 파일 매핑 + "미적용 패턴 정당화" 표(캐시/페이지네이션/재시도/서킷브레이커/큐/레이트리밋/낙관적락/SSE-메뉴/APM ❌) + 패턴→NFR 추적.
+- `construction/u3-menu/nfr-design/logical-components.md`: 논리 컴포넌트 목록(MenuRouter·MenuService·SqlMenuRepo·SqlCategoryRepo·menu-api·MenuBrowseView·MenuManageView) + 책임·고객읽기/관리자쓰기 상호작용 ASCII 다이어그램 + 미사용 인프라 명시 + NFR→컴포넌트 매핑.
+- `aidlc-state.md`: U3 스트림 B → Functional Design/NFR Requirements/NFR Design ✅ 표기.
+**Context**: CONSTRUCTION - Phase 1 [U3/B] NFR Design 완료.
+
+---
+
+## U3 Menu — Infrastructure Design (스트림 B)
+**Timestamp**: 2026-08-31T00:00:00Z
+**User Input**: "U3에 대한 Infrastructure Design 추가"
+**AI Response**: `construction/plans/u3-menu-infrastructure-design-plan.md` Q1~Q7 `[Answer]:` 전부 권장안(로컬 단일노드·단일프로세스·SQLite파일·메시징無·vite프록시+앱레벨게이트·기본로깅+헬스체크·U1인프라공유+앱레벨 매장스코프) 기입 후 Infrastructure Design 산출물 2종 생성.
+- `construction/u3-menu/infrastructure-design/infrastructure-design.md`: 논리→물리 컴포넌트 매핑표 + 인프라 결정 IX1~IX7 + 미도입 인프라 정당화표(클라우드/컨테이너/관리형DB/오브젝트스토리지/큐/API게이트웨이·LB·WAF/CDN/관측성스택/시크릿매니저 ❌ + 향후지점) + 향후 클라우드 매핑 참고표 + NFR→인프라 추적.
+- `construction/u3-menu/infrastructure-design/deployment-architecture.md`: 로컬 단일노드 배포 토폴로지 ASCII(브라우저→vite:5173→/api프록시→uvicorn:8000→SQLite, 이미지 외부URL) + 실행/기동 절차 6단계 + 포트/경로 매핑 + 데이터 수명주기 + 배포 특성 요약.
+- 공유 인프라: **신규 없음** → `shared-infrastructure.md` 미생성(U1 소유 모놀리스 인프라 참조). U3는 신규 물리 컴포넌트·의존성 미도입.
+- `aidlc-state.md`: U3 스트림 B → Infrastructure Design ✅ 추가 표기.
+**Context**: CONSTRUCTION - Phase 1 [U3/B] Infrastructure Design 완료. 남은 스테이지: Code Generation(코드 구현은 완료, DoD 런타임 검증만 잔여).
+
+---
+
+## U5 Monitoring (SSE) — Functional Design
+**Timestamp**: 2026-08-31T00:00:00Z
+**Stream**: Phase 1 · D [U5 Order Monitoring (SSE)]
+**User Input**: U5 담당. Functional Design Plan(Q1~Q12) 답변 제출 — Q7=B, 나머지 전부 A.
+**AI Response**: Functional Design 산출물 4종 생성:
+- `construction/u5-monitoring/functional-design/domain-entities.md` — 참조 엔티티(Order/OrderItem/TableSession/Table), OrderView 투영(+order_id 병기 규약), 상태 enum, OrderEvent payload 형식(Q11/Q12), 인메모리 구독자 레지스트리 모델.
+- `business-rules.md` — 상태 전이 forward-only 표+불변식 BR-U5-1/2(🔬 PBT-U5-STATE), 삭제 상태무관+총액 재계산 BR-U5-5(🔬 PBT-U5-DELETE), 대시보드 active 세션 집계, 커밋 후 발행, SSE 재연결 스냅샷 replace, 쿼리 토큰 인증, 에러 매핑(401/403/404/409/422).
+- `business-logic-model.md` — 초기 로드→구독, order_created/updated/deleted 리듀서, change_status/delete_order 흐름, 재연결 복구, broker subscribe/publish/unsubscribe/snapshot 의사코드, PBT 속성 명세.
+- `frontend-components.md` — MonitoringDashboardView(ordersById/unseen/tableTotals/filter state), TableCard, OrderDetailModal(허용 전이만 버튼 노출·삭제 확인 팝업), TableFilterBar(클라이언트 필터), SseClient(EventSource+쿼리토큰+백오프), API 연동표, Q7-B unseen-until-viewed 강조.
+**Decisions**: Q1 forward-only 인접 전이, Q2 상태무관 삭제, Q3 active 세션 전체 집계, Q4 스냅샷 replace 복구, Q5 쿼리 토큰 SSE 인증, Q6 클라이언트 필터, **Q7=B(열람 전까지 강조 유지)**, Q8 최신 3개, Q9 단일 주문 상세, Q10 낙관적 처리(락 없음), Q11 order_deleted={order_id,table_id,table_total}, Q12 order_updated=OrderView 전체. 동결 계약(OrderView/broker/파사드/schemas) 변경 없음 — order_id는 SSE 프레임 직렬화 레이어에서 병기.
+**Context**: CONSTRUCTION - Phase 1 [U5] Functional Design 완료. 승인 시 NFR Requirements 진행.
+
+---
+
+## U5 Monitoring (SSE) — NFR Requirements
+**Timestamp**: 2026-08-31T00:00:00Z
+**Stream**: Phase 1 · D [U5 Order Monitoring (SSE)]
+**User Input**: NFR Requirements Plan(Q1~Q9) 답변 — 전부 A.
+**AI Response**: NFR 산출물 2종 생성:
+- `nfr-requirements/nfr-requirements.md` — 성능(PERF-1 커밋→반영 P95≤2초, PERF-2 fan-out ms, PERF-3 스냅샷 P95≤500ms), 확장(SCAL 1~5 동시 구독자·단일 프로세스·수평확장 비목표), 신뢰성(REL-1 15s ping, REL-2 백오프, REL-3 스냅샷 replace 멱등, REL-4 큐 maxsize=1000 드롭, REL-5 커밋 후 발행), 보안(SEC-1~4 JWT·쿼리토큰 마스킹·프로덕션 HTTPS 전환), 사용성(USE-1 44px, USE-2 unseen-until-viewed, USE-3 연결상태), 테스트(TEST-1 Hypothesis PBT, TEST-3 프론트 vitest 예제), 유지보수(구조화 로깅·APM 미도입), 이식성(Docker 불필요).
+- `nfr-requirements/tech-stack-decisions.md` — 백엔드 StreamingResponse+asyncio.Queue(sse-starlette 미도입), 프론트 EventSource+쿼리토큰+useReducer/useOrderStream, PBT Hypothesis(백엔드)/vitest 예제(프론트), 신규 의존성 없음(requirements.txt/package.json 불변), 프로덕션 보안 전환 체크리스트.
+**Decisions**: Q1 소규모 구독자, Q2 P95≤2초, Q3 15s keep-alive+백오프, Q4 큐 상한 드롭→스냅샷 복구, Q5 쿼리토큰+로그마스킹, Q6 구조화 로깅만, Q7 Hypothesis(백)/vitest(프), Q8 StreamingResponse+asyncio, Q9 useReducer. 신규 의존성 0.
+**Context**: CONSTRUCTION - Phase 1 [U5] NFR Requirements 완료. 승인 시 NFR Design 진행.
+
+---
+
+## U5 Monitoring (SSE) — NFR Design
+**Timestamp**: 2026-08-31T00:00:00Z
+**Stream**: Phase 1 · D [U5 Order Monitoring (SSE)]
+**User Input**: NFR Design Plan(Q1~Q6) 답변 — 전부 A.
+**AI Response**: NFR Design 산출물 2종 생성:
+- `nfr-design/nfr-design-patterns.md` — 10개 패턴: Publish-after-commit, In-memory fan-out, Snapshot-replace 재동기화, Backoff reconnect, Keep-alive heartbeat(wait_for 타임아웃 분기), Bounded queue+drop(maxsize=1000), Lifecycle finally, Idempotent pure reducer, Auth-at-connect(1회 검증), Query-optimized snapshot. 각 패턴→NFR 매핑·트레이드오프.
+- `nfr-design/logical-components.md` — 컴포넌트 맵/시퀀스: OrderEventBroker(subscribers registry·fan-out·snapshot·bounded queue), SseStreamEndpoint(auth-at-connect·generator·ping·finally), OrderAdminService(change_status/delete_order·publish-after-commit·순수함수 추출), 프론트 SseClient·useOrderStream·orderStreamReducer. 구독/재동기화·상태변경·삭제 시퀀스, 소유·경계 재확인(order_id는 라우터 직렬화 레이어, 스키마 불변).
+**Decisions**: Q1 서비스 명시 publish, Q2 while+finally+wait_for ping, Q3 구독선등록→스냅샷→yield+멱등 upsert, Q4 order_id 순수 리듀서, Q5 auth-at-connect 1회, Q6 단일 조인 쿼리+메모리 집계.
+**Context**: CONSTRUCTION - Phase 1 [U5] NFR Design 완료. 승인 시 Infrastructure Design 진행.
+
+---
+
+## U5 Monitoring (SSE) — Infrastructure Design
+**Timestamp**: 2026-08-31T00:00:00Z
+**Stream**: Phase 1 · D [U5 Order Monitoring (SSE)]
+**User Input**: Infrastructure Design Plan(Q1~Q6) 답변 — 전부 A.
+**AI Response**: Infrastructure Design 산출물 2종 생성:
+- `infrastructure-design/infrastructure-design.md` — 컴포넌트→런타임 매핑(broker=프로세스 메모리 싱글턴, SSE=uvicorn StreamingResponse, DB=SQLite 재사용, 메시징=asyncio.Queue), 단일 워커 모델(멀티워커 금지), SSE 헤더(text/event-stream·no-cache·keep-alive·X-Accel-Buffering:no), Vite 프록시 스트리밍, stdout 구조화 로깅+토큰 마스킹, 신규 인프라 0, 프로덕션 전환 표(멀티워커+Redis·HTTPS·nginx).
+- `infrastructure-design/deployment-architecture.md` — 로컬 토폴로지 다이어그램(Browser↔Vite:5173↔proxy↔uvicorn:8000↔SQLite), SSE 연결 경로 6단계, 기존 기동 절차 재사용, U5 종단 검증 시나리오 9개(2초 반영·강조·상세·전이·삭제·필터·재연결·PBT), 제약(단일 프로세스·로컬·HTTP·휘발).
+**Decisions**: Q1 단일 워커, Q2 Vite 프록시 스트리밍+no-buffering, Q3 표준 SSE 헤더, Q4 stdout+마스킹, Q5 SQLite+asyncio.Queue(신규 0), Q6 기존 절차+시나리오 문서화.
+**Context**: CONSTRUCTION - Phase 1 [U5] Infrastructure Design 완료. 승인 시 Code Generation(실제 U5 구현) 진행.
+
+---
